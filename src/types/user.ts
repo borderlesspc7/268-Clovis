@@ -4,7 +4,7 @@ export interface User {
   email: string;
   createdAt: Date;
   updatedAt: Date;
-  role?: "admin" | "user";
+  role?: "admin" | "user" | string;
 }
 
 export interface AuthState {
@@ -22,5 +22,5 @@ export interface RegisterCredentials extends LoginCredentials {
   name: string;
   confirmPassword?: string; // Opcional, usado apenas para validação local
   phone?: string;
-  role?: "admin" | "user";
+  role?: "admin" | "user" | string;
 }
