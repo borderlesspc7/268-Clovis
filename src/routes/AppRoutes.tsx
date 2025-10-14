@@ -3,13 +3,13 @@ import { paths } from "./paths";
 import { ProtectedRoute } from "./ProtectedRoutes";
 import { Login } from "../pages/Login/Login";
 import { Register } from "../pages/Register/Register";
-import { Layout } from "../components/layout/Layout/Layout";
+import { Dashboard } from "../pages/Dashboard/Dashboard";
+import { Projetos } from "../pages/Projetos/Projetos";
+import { NovoProjeto } from "../pages/NovoProjeto/NovoProjeto";
+import { GerarDocumentos } from "../pages/GerarDocumentos/GerarDocumentos";
 
 export const AppRoutes = () => {
   // Componentes temporários para as páginas que ainda não foram criadas
-  const Dashboard = () => <div>Dashboard (em desenvolvimento)</div>;
-  const Projetos = () => <div>Projetos (em desenvolvimento)</div>;
-  const NovoProjeto = () => <div>Novo Projeto (em desenvolvimento)</div>;
   const Relatorios = () => <div>Relatórios (em desenvolvimento)</div>;
   const Historico = () => <div>Histórico (em desenvolvimento)</div>;
 
@@ -23,9 +23,7 @@ export const AppRoutes = () => {
           path={paths.dashboard}
           element={
             <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
+              <Dashboard />
             </ProtectedRoute>
           }
         />
@@ -58,6 +56,14 @@ export const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <Historico />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={paths.gerarDocumentos}
+          element={
+            <ProtectedRoute>
+              <GerarDocumentos />
             </ProtectedRoute>
           }
         />

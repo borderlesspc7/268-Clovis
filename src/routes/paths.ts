@@ -5,6 +5,7 @@ export const paths = {
   dashboard: "/dashboard",
   projetos: "/projetos",
   novoProjeto: "/novo-projeto",
+  gerarDocumentos: "/projetos/:projectId/gerar-documentos",
   relatorios: "/relatorios",
   historico: "/historico",
 };
