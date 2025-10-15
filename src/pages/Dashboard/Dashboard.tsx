@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Layout } from "../../components/layout/Layout/Layout";
 import {
   FileText,
@@ -27,17 +27,36 @@ import {
   Bar,
 } from "recharts";
 import "./Dashboard.css";
+import { useProjects } from "../../hooks/useProjects";
+import { authService } from "../../services/authService";
 
 export const Dashboard: React.FC = () => {
   // Estado para filtros
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [selectedChart, setSelectedChart] = useState("line");
+  const { projects } = useProjects();
+  const [usersCount, setUsersCount] = useState<number>(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const users = await authService.getAllUsers();
+        if (isMounted) setUsersCount(users.length);
+      } catch {
+        if (isMounted) setUsersCount(0);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Dados mockados para as métricas
   const metrics = [
     {
       title: "Total de Projetos",
-      value: "24",
+      value: projects.length,
       change: "+12%",
       changeType: "positive" as const,
       icon: FileText,
@@ -45,7 +64,8 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: "Documentos Gerados",
-      value: "156",
+      value: projects.filter((project) => project.status === "completed")
+        .length,
       change: "+8%",
       changeType: "positive" as const,
       icon: CheckCircle,
@@ -53,15 +73,15 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: "Em Processamento",
-      value: "7",
+      value: projects.filter((project) => project.status === "pending").length,
       change: "-2%",
       changeType: "negative" as const,
       icon: Clock,
       color: "#f59e0b",
     },
     {
-      title: "Usuários Ativos",
-      value: "18",
+      title: "Usuários",
+      value: usersCount,
       change: "+5%",
       changeType: "positive" as const,
       icon: Users,

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { Timestamp } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../../components/layout/Layout/Layout";
+import { useProjects } from "../../hooks/useProjects";
 import {
   Search,
   Filter,
@@ -21,112 +23,44 @@ import {
 } from "lucide-react";
 import "./Projetos.css";
 
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  area: string;
-  owner: string;
-  status: "em_analise" | "aprovado" | "rejeitado" | "concluido";
-  createdAt: string;
-  updatedAt: string;
-  documentsCount: number;
-  pdfName: string;
-}
-
 export const Projetos: React.FC = () => {
   const navigate = useNavigate();
+  const { projects, deleteProject, isLoading } = useProjects();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
-  // Dados mockados dos projetos
-  const [projects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "Fazenda São João",
-      description: "Projeto de cultivo de soja e milho em área de 150 hectares",
-      location: "Ribeirão Preto, SP",
-      area: "150",
-      owner: "João Silva",
-      status: "aprovado",
-      createdAt: "2024-01-15",
-      updatedAt: "2024-01-20",
-      documentsCount: 3,
-      pdfName: "memorial_sao_joao.pdf",
-    },
-    {
-      id: "2",
-      name: "Fazenda Santa Maria",
-      description: "Projeto de pecuária extensiva com 200 hectares",
-      location: "Campinas, SP",
-      area: "200",
-      owner: "Maria Santos",
-      status: "em_analise",
-      createdAt: "2024-01-20",
-      updatedAt: "2024-01-22",
-      documentsCount: 1,
-      pdfName: "memorial_santa_maria.pdf",
-    },
-    {
-      id: "3",
-      name: "Sítio Esperança",
-      description: "Projeto de agricultura familiar com hortaliças",
-      location: "Sorocaba, SP",
-      area: "25",
-      owner: "Carlos Oliveira",
-      status: "concluido",
-      createdAt: "2024-01-10",
-      updatedAt: "2024-01-25",
-      documentsCount: 3,
-      pdfName: "memorial_esperanca.pdf",
-    },
-    {
-      id: "4",
-      name: "Fazenda Verde Vale",
-      description: "Projeto de reflorestamento e preservação ambiental",
-      location: "Piracicaba, SP",
-      area: "300",
-      owner: "Ana Costa",
-      status: "rejeitado",
-      createdAt: "2024-01-05",
-      updatedAt: "2024-01-18",
-      documentsCount: 2,
-      pdfName: "memorial_verde_vale.pdf",
-    },
-  ]);
-
-  const getStatusInfo = (status: Project["status"]) => {
+  const getStatusInfo = (status: string) => {
     switch (status) {
-      case "em_analise":
+      case "active":
         return {
-          label: "Em Análise",
-          color: "#f59e0b",
-          bgColor: "#fef3c7",
-          icon: Clock,
-        };
-      case "aprovado":
-        return {
-          label: "Aprovado",
+          label: "Ativo",
           color: "#10b981",
           bgColor: "#d1fae5",
           icon: CheckCircle,
         };
-      case "rejeitado":
+      case "pending":
         return {
-          label: "Rejeitado",
-          color: "#ef4444",
-          bgColor: "#fee2e2",
-          icon: AlertCircle,
+          label: "Pendente",
+          color: "#f59e0b",
+          bgColor: "#fef3c7",
+          icon: Clock,
         };
-      case "concluido":
+      case "completed":
         return {
           label: "Concluído",
           color: "#8b5cf6",
           bgColor: "#ede9fe",
           icon: CheckCircle,
+        };
+      case "cancelled":
+        return {
+          label: "Cancelado",
+          color: "#ef4444",
+          bgColor: "#fee2e2",
+          icon: AlertCircle,
         };
       default:
         return {
@@ -150,8 +84,24 @@ export const Projetos: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+  const formatDate = (value: unknown) => {
+    try {
+      if (!value) return "-";
+      if (value instanceof Date) return value.toLocaleDateString("pt-BR");
+      if (value instanceof Timestamp)
+        return value.toDate().toLocaleDateString("pt-BR");
+      if (typeof value === "number")
+        return new Date(value).toLocaleDateString("pt-BR");
+      if (typeof value === "string") {
+        const d = new Date(value);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
+        const asNum = Number(value);
+        if (!isNaN(asNum)) return new Date(asNum).toLocaleDateString("pt-BR");
+      }
+      return "-";
+    } catch {
+      return "-";
+    }
   };
 
   const handleProjectAction = (projectId: string, action: string) => {
@@ -160,6 +110,10 @@ export const Projetos: React.FC = () => {
 
     if (action === "generate") {
       navigate(`/projetos/${projectId}/gerar-documentos`);
+    } else if (action === "delete") {
+      if (window.confirm("Tem certeza que deseja excluir este projeto?")) {
+        deleteProject(projectId);
+      }
     }
   };
 
@@ -212,10 +166,10 @@ export const Projetos: React.FC = () => {
                     className="filter-select"
                   >
                     <option value="all">Todos</option>
-                    <option value="em_analise">Em Análise</option>
-                    <option value="aprovado">Aprovado</option>
-                    <option value="rejeitado">Rejeitado</option>
-                    <option value="concluido">Concluído</option>
+                    <option value="active">Ativo</option>
+                    <option value="pending">Pendente</option>
+                    <option value="completed">Concluído</option>
+                    <option value="cancelled">Cancelado</option>
                   </select>
                 </div>
               </div>
@@ -233,10 +187,8 @@ export const Projetos: React.FC = () => {
               <Clock size={20} />
             </div>
             <div className="stat-content">
-              <h3>
-                {projects.filter((p) => p.status === "em_analise").length}
-              </h3>
-              <p>Em Análise</p>
+              <h3>{projects.filter((p) => p.status === "pending").length}</h3>
+              <p>Pendentes</p>
             </div>
           </div>
 
@@ -248,8 +200,8 @@ export const Projetos: React.FC = () => {
               <CheckCircle size={20} />
             </div>
             <div className="stat-content">
-              <h3>{projects.filter((p) => p.status === "aprovado").length}</h3>
-              <p>Aprovados</p>
+              <h3>{projects.filter((p) => p.status === "active").length}</h3>
+              <p>Ativos</p>
             </div>
           </div>
 
@@ -261,7 +213,7 @@ export const Projetos: React.FC = () => {
               <CheckCircle size={20} />
             </div>
             <div className="stat-content">
-              <h3>{projects.filter((p) => p.status === "concluido").length}</h3>
+              <h3>{projects.filter((p) => p.status === "completed").length}</h3>
               <p>Concluídos</p>
             </div>
           </div>
@@ -274,19 +226,31 @@ export const Projetos: React.FC = () => {
               <AlertCircle size={20} />
             </div>
             <div className="stat-content">
-              <h3>{projects.filter((p) => p.status === "rejeitado").length}</h3>
-              <p>Rejeitados</p>
+              <h3>{projects.filter((p) => p.status === "cancelled").length}</h3>
+              <p>Cancelados</p>
             </div>
           </div>
         </div>
 
         {/* Lista de Projetos */}
         <div className="projects-list">
-          {filteredProjects.length === 0 ? (
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Carregando projetos...</p>
+            </div>
+          ) : filteredProjects.length === 0 ? (
             <div className="empty-state">
               <FileText size={48} />
               <h3>Nenhum projeto encontrado</h3>
               <p>Tente ajustar os filtros ou criar um novo projeto</p>
+              <button
+                className="btn-primary"
+                onClick={() => navigate("/novo-projeto")}
+              >
+                <Plus size={16} />
+                Criar Primeiro Projeto
+              </button>
             </div>
           ) : (
             filteredProjects.map((project) => {
@@ -392,7 +356,7 @@ export const Projetos: React.FC = () => {
                       </div>
                       <div className="detail-item">
                         <FileText size={16} />
-                        <span>{project.documentsCount} documentos</span>
+                        <span>0 documentos</span>
                       </div>
                     </div>
                   </div>
@@ -404,7 +368,7 @@ export const Projetos: React.FC = () => {
                     </div>
                     <div className="project-pdf">
                       <FileText size={14} />
-                      <span>{project.pdfName}</span>
+                      <span>PDF não carregado</span>
                     </div>
                   </div>
                 </div>

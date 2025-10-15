@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "../../components/layout/Layout/Layout";
+import { useProjects } from "../../hooks/useProjects";
 import {
   Upload,
   FileText,
@@ -26,10 +28,14 @@ interface ProjectData {
 }
 
 export const NovoProjeto: React.FC = () => {
+  const navigate = useNavigate();
+  const { addProject } = useProjects();
+
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [projectData, setProjectData] = useState<ProjectData>({
     name: "",
     description: "",
@@ -173,11 +179,33 @@ export const NovoProjeto: React.FC = () => {
     setCurrentStep((prev) => prev - 1);
   };
 
-  const handleSubmit = () => {
-    if (validateStep(3)) {
-      // Aqui será implementada a lógica de criação do projeto
-      console.log("Projeto criado:", { uploadedFile, projectData });
-      alert("Projeto criado com sucesso! (Simulação)");
+  const handleSubmit = async () => {
+    if (!validateStep(3)) {
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      // Criar o projeto usando o contexto (Firestore)
+      const newProject = await addProject({
+        name: projectData.name,
+        owner: projectData.owner,
+        location: projectData.location,
+        area: projectData.area,
+        status: "active",
+        description: projectData.description,
+      });
+
+      console.log("Projeto criado:", newProject);
+
+      // Redirecionar para a página de projetos
+      navigate("/projetos");
+    } catch (error) {
+      console.error("Erro ao criar projeto:", error);
+      alert("Erro ao criar projeto. Tente novamente.");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -198,7 +226,7 @@ export const NovoProjeto: React.FC = () => {
   return (
     <Layout>
       <div className="novo-projeto">
-        <div className="page-header">
+        <div className="page-header-novo-projeto">
           <div className="header-content-projeto">
             <h1>Novo Projeto</h1>
           </div>
@@ -495,8 +523,12 @@ export const NovoProjeto: React.FC = () => {
               Próximo
             </button>
           ) : (
-            <button onClick={handleSubmit} className="btn-primary">
-              Criar Projeto
+            <button
+              onClick={handleSubmit}
+              className="btn-primary"
+              disabled={isCreating}
+            >
+              {isCreating ? "Criando Projeto..." : "Criar Projeto"}
             </button>
           )}
         </div>

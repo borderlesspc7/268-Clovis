@@ -6,7 +6,14 @@ import {
   type Unsubscribe,
   onAuthStateChanged,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
 import type {
   LoginCredentials,
   RegisterCredentials,
@@ -91,6 +98,34 @@ export const authService = {
 
       await setDoc(doc(db, "users", firebaseUser.uid), userData);
       return userData;
+    } catch (error) {
+      const message = getFirebaseErrorMessage(error as string | FirebaseError);
+      throw new Error(message);
+    }
+  },
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const snap = await getDocs(collection(db, "users"));
+      return snap.docs.map((d) => {
+        const data = d.data() as Partial<User> & {
+          createdAt: Date | Timestamp;
+          updatedAt: Date | Timestamp;
+        };
+        return {
+          uid: data.uid ?? d.id,
+          name: data.name ?? d.id,
+          email: data.email ?? "",
+          createdAt:
+            data.createdAt instanceof Timestamp
+              ? data.createdAt.toDate()
+              : data.createdAt,
+          updatedAt:
+            data.updatedAt instanceof Timestamp
+              ? data.updatedAt.toDate()
+              : data.updatedAt,
+        } as User;
+      });
     } catch (error) {
       const message = getFirebaseErrorMessage(error as string | FirebaseError);
       throw new Error(message);
