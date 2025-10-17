@@ -18,7 +18,6 @@ import {
   Filter,
   Search,
   Calendar,
-  ChevronRight,
 } from "lucide-react";
 import "./Historico.css";
 
@@ -59,7 +58,7 @@ const Historico: React.FC = () => {
       const mockHistory: HistoryEntry[] = [];
 
       // Gerar histórico baseado em projetos reais
-      projects.forEach((project, index) => {
+      projects.forEach((project) => {
         mockHistory.push({
           id: `${project.id}-created`,
           action: "Projeto criado",
@@ -94,25 +93,27 @@ const Historico: React.FC = () => {
       });
 
       // Gerar histórico baseado em usuários reais
-      users.forEach((u: any) => {
-        mockHistory.push({
-          id: `user-${u.uid}-registered`,
-          action: "Usuário registrado",
-          type: "user",
-          user: "Sistema",
-          userId: "system",
-          timestamp:
-            u.createdAt instanceof Date
-              ? u.createdAt.toISOString()
-              : new Date().toISOString(),
-          details: `Novo usuário registrado: ${u.email}`,
-          status: "success",
-          metadata: {
-            userId: u.uid,
-            userEmail: u.email,
-          },
-        });
-      });
+      users.forEach(
+        (u: { uid: string; email: string; createdAt?: Date | string }) => {
+          mockHistory.push({
+            id: `user-${u.uid}-registered`,
+            action: "Usuário registrado",
+            type: "user",
+            user: "Sistema",
+            userId: "system",
+            timestamp:
+              u.createdAt instanceof Date
+                ? u.createdAt.toISOString()
+                : new Date().toISOString(),
+            details: `Novo usuário registrado: ${u.email}`,
+            status: "success",
+            metadata: {
+              userId: u.uid,
+              userEmail: u.email,
+            },
+          });
+        }
+      );
 
       // Adicionar algumas atividades de sistema mockadas
       const systemActivities = [
