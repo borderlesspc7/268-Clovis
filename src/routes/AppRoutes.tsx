@@ -8,11 +8,9 @@ import { Projetos } from "../pages/Projetos/Projetos";
 import { NovoProjeto } from "../pages/NovoProjeto/NovoProjeto";
 import { GerarDocumentos } from "../pages/GerarDocumentos/GerarDocumentos";
 import Relatorios from "../pages/Relatorios/Relatorios";
+import Historico from "../pages/Historico/Historico";
 
 export const AppRoutes = () => {
-  // Componentes temporários para as páginas que ainda não foram criadas
-  const Historico = () => <div>Histórico (em desenvolvimento)</div>;
-
   return (
     <BrowserRouter>
       <Routes>
